@@ -8,8 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getTeams, createTeam, updateTeam, deleteTeam } from '@/lib/storage';
 import { Team } from '@/types';
-import { Plus, Edit, Trash2, Eye, FileEdit, Copy, Home } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, FileEdit, Copy, Home, Settings } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import Header from '@/components/layout/Header';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -101,25 +102,24 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="gradient-primary text-primary-foreground">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">لوحة الإدارة</h1>
-              <p className="text-sm opacity-80">إدارة الفرق والتقارير</p>
-            </div>
-            <Button
-              variant="ghost"
-              className="text-primary-foreground hover:bg-primary-foreground/10"
-              onClick={() => navigate('/')}
-            >
-              <Home className="w-4 h-4 ml-2" />
-              الرئيسية
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Header title="لوحة الإدارة" subtitle="إدارة الفرق والتقارير">
+        <Button
+          variant="ghost"
+          className="text-primary-foreground hover:bg-primary-foreground/10"
+          onClick={() => navigate('/admin/settings')}
+        >
+          <Settings className="w-4 h-4 ml-2" />
+          الإعدادات
+        </Button>
+        <Button
+          variant="ghost"
+          className="text-primary-foreground hover:bg-primary-foreground/10"
+          onClick={() => navigate('/')}
+        >
+          <Home className="w-4 h-4 ml-2" />
+          الرئيسية
+        </Button>
+      </Header>
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats */}
