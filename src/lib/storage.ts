@@ -1,6 +1,21 @@
-import { Team, Task, Achievement, Challenge } from '@/types';
+import { Team, Task, Achievement, Challenge, Settings } from '@/types';
 
 const ADMIN_PASSWORD = 'admin123';
+
+const DEFAULT_SETTINGS: Settings = {
+  headerTitle: 'التقرير الأسبوعي',
+  headerSubtitle: 'نظام إدارة التقارير الأسبوعية للفرق',
+};
+
+// Settings
+export const getSettings = (): Settings => {
+  const data = localStorage.getItem('app_settings');
+  return data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : DEFAULT_SETTINGS;
+};
+
+export const saveSettings = (settings: Settings): void => {
+  localStorage.setItem('app_settings', JSON.stringify(settings));
+};
 
 // Teams
 export const getTeams = (): Team[] => {

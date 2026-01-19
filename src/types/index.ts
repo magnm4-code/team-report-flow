@@ -31,6 +31,11 @@ export interface Challenge {
   updatedAt: string;
 }
 
+export interface Settings {
+  headerTitle: string;
+  headerSubtitle: string;
+}
+
 export interface Team {
   id: string;
   name: string;
