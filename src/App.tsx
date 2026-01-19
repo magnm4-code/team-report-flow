@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
+import ManagerReports from "./pages/ManagerReports";
 import ReportLayout from "./components/layout/ReportLayout";
 import TasksFill from "./pages/team/TasksFill";
 import AchievementsFill from "./pages/team/AchievementsFill";
@@ -25,6 +26,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/reports" element={<ManagerReports />} />
           
           {/* Team Fill Routes */}
           <Route path="/team/:teamId/fill" element={<ReportLayout mode="fill" />}>

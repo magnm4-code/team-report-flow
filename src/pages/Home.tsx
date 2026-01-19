@@ -78,7 +78,7 @@ const Home = () => {
 
       {/* Actions Section */}
       <div className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-8">
           {/* Admin Login Card */}
           <Card className="card-elevated hover:shadow-xl transition-shadow duration-300">
             <CardHeader className="text-center pb-2">
@@ -120,6 +120,27 @@ const Home = () => {
                   </form>
                 </DialogContent>
               </Dialog>
+            </CardContent>
+          </Card>
+
+          {/* Manager Reports Card */}
+          <Card className="card-elevated hover:shadow-xl transition-shadow duration-300">
+            <CardHeader className="text-center pb-2">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-accent/10 flex items-center justify-center">
+                <FileText className="w-8 h-8 text-accent" />
+              </div>
+              <CardTitle className="text-2xl">عرض التقارير</CardTitle>
+              <CardDescription>
+                استعراض تقارير جميع الفرق
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                onClick={() => navigate('/reports')}
+              >
+                عرض التقارير
+              </Button>
             </CardContent>
           </Card>
 
