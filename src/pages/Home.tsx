@@ -9,6 +9,25 @@ import { verifyAdminPassword, getTeam, verifyTeamPasscode, getSettings } from '@
 import { Shield, Users, FileText, ClipboardList, Trophy, AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import Header from '@/components/layout/Header';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import { useLayoutOrder } from '@/hooks/useLayoutOrder';
+import SortableItem from '@/components/dnd/SortableItem';
+
+type CardId = 'admin' | 'reports' | 'team';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -18,6 +37,12 @@ const Home = () => {
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
   const [settings, setSettings] = useState({ headerTitle: 'التقرير الأسبوعي', headerSubtitle: 'نظام إدارة التقارير الأسبوعية للفرق' });
+  const [cardOrder, setCardOrder] = useLayoutOrder<CardId>('home-cards-order', ['admin', 'reports', 'team']);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   useEffect(() => {
     setSettings(getSettings());
@@ -63,6 +88,82 @@ const Home = () => {
     setTeamDialogOpen(false);
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = cardOrder.indexOf(active.id as CardId);
+      const newIndex = cardOrder.indexOf(over.id as CardId);
+      setCardOrder(arrayMove(cardOrder, oldIndex, newIndex));
+    }
+  };
+
+  const renderCard = (id: CardId) => {
+    switch (id) {
+      case 'admin':
+        return (
+          <Card 
+            className="card-elevated hover:shadow-xl transition-all duration-300 cursor-pointer group h-full"
+            onClick={() => setAdminDialogOpen(true)}
+          >
+            <CardHeader className="text-center pb-2">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <Shield className="w-8 h-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">لوحة الإدارة</CardTitle>
+              <CardDescription>إدارة الفرق والتقارير</CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <span className="text-sm text-muted-foreground group-hover:text-primary transition-colors">
+                انقر للدخول ←
+              </span>
+            </CardContent>
+          </Card>
+        );
+      case 'reports':
+        return (
+          <Card 
+            className="card-elevated hover:shadow-xl transition-all duration-300 cursor-pointer group h-full"
+            onClick={() => navigate('/reports')}
+          >
+            <CardHeader className="text-center pb-2">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                <FileText className="w-8 h-8 text-accent" />
+              </div>
+              <CardTitle className="text-2xl">عرض التقارير</CardTitle>
+              <CardDescription>استعراض تقارير جميع الفرق</CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <span className="text-sm text-muted-foreground group-hover:text-accent transition-colors">
+                انقر للعرض ←
+              </span>
+            </CardContent>
+          </Card>
+        );
+      case 'team':
+        return (
+          <Card 
+            className="card-elevated hover:shadow-xl transition-all duration-300 cursor-pointer group h-full"
+            onClick={() => setTeamDialogOpen(true)}
+          >
+            <CardHeader className="text-center pb-2">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-secondary/10 flex items-center justify-center group-hover:bg-secondary/20 transition-colors">
+                <Users className="w-8 h-8 text-secondary" />
+              </div>
+              <CardTitle className="text-2xl">دخول الفريق</CardTitle>
+              <CardDescription>الوصول إلى تقرير فريقك</CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <span className="text-sm text-muted-foreground group-hover:text-secondary transition-colors">
+                انقر للدخول ←
+              </span>
+            </CardContent>
+          </Card>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -79,70 +180,21 @@ const Home = () => {
 
       {/* Actions Section */}
       <div className="container mx-auto px-4 py-16">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-8">
-          {/* Admin Login Card */}
-          <Card 
-            className="card-elevated hover:shadow-xl transition-all duration-300 cursor-pointer group"
-            onClick={() => setAdminDialogOpen(true)}
-          >
-            <CardHeader className="text-center pb-2">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <Shield className="w-8 h-8 text-primary" />
-              </div>
-              <CardTitle className="text-2xl">لوحة الإدارة</CardTitle>
-              <CardDescription>
-                إدارة الفرق والتقارير
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              <span className="text-sm text-muted-foreground group-hover:text-primary transition-colors">
-                انقر للدخول ←
-              </span>
-            </CardContent>
-          </Card>
-
-          {/* Manager Reports Card */}
-          <Card 
-            className="card-elevated hover:shadow-xl transition-all duration-300 cursor-pointer group"
-            onClick={() => navigate('/reports')}
-          >
-            <CardHeader className="text-center pb-2">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                <FileText className="w-8 h-8 text-accent" />
-              </div>
-              <CardTitle className="text-2xl">عرض التقارير</CardTitle>
-              <CardDescription>
-                استعراض تقارير جميع الفرق
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              <span className="text-sm text-muted-foreground group-hover:text-accent transition-colors">
-                انقر للعرض ←
-              </span>
-            </CardContent>
-          </Card>
-
-          {/* Team Access Card */}
-          <Card 
-            className="card-elevated hover:shadow-xl transition-all duration-300 cursor-pointer group"
-            onClick={() => setTeamDialogOpen(true)}
-          >
-            <CardHeader className="text-center pb-2">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-secondary/10 flex items-center justify-center group-hover:bg-secondary/20 transition-colors">
-                <Users className="w-8 h-8 text-secondary" />
-              </div>
-              <CardTitle className="text-2xl">دخول الفريق</CardTitle>
-              <CardDescription>
-                الوصول إلى تقرير فريقك
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              <span className="text-sm text-muted-foreground group-hover:text-secondary transition-colors">
-                انقر للدخول ←
-              </span>
-            </CardContent>
-          </Card>
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={cardOrder} strategy={rectSortingStrategy}>
+            <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-8">
+              {cardOrder.map((id) => (
+                <SortableItem key={id} id={id}>
+                  {renderCard(id)}
+                </SortableItem>
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
 
         {/* Admin Dialog */}
         <Dialog open={adminDialogOpen} onOpenChange={setAdminDialogOpen}>
