@@ -36,7 +36,7 @@ const Home = () => {
   const [teamPasscode, setTeamPasscode] = useState('');
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
-  const [settings, setSettings] = useState({ headerTitle: 'التقرير الأسبوعي', headerSubtitle: 'نظام إدارة التقارير الأسبوعية للفرق' });
+  const [settings, setSettings] = useState<{ headerTitle: string; headerSubtitle: string; featuresTitle?: string }>({ headerTitle: 'التقرير الأسبوعي', headerSubtitle: 'نظام إدارة التقارير الأسبوعية للفرق', featuresTitle: 'مميزات النظام' });
   const [cardOrder, setCardOrder] = useLayoutOrder<CardId>('home-cards-order', ['admin', 'reports', 'team']);
 
   const sensors = useSensors(
@@ -260,7 +260,7 @@ const Home = () => {
 
         {/* Features Section */}
         <div className="max-w-4xl mx-auto mt-16">
-          <h2 className="text-2xl font-bold text-center mb-8">مميزات النظام</h2>
+          <h2 className="text-2xl font-bold text-center mb-8">{settings.featuresTitle || 'مميزات النظام'}</h2>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center p-6">
               <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-success/20 flex items-center justify-center">

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Moon, Sun, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getSettings } from '@/lib/storage';
+import { getSettings, applyThemeColors } from '@/lib/storage';
 import ncgrLogo from '@/assets/ncgr-logo.png';
 import {
   DndContext,
@@ -75,7 +75,17 @@ const SortableHeaderItem = ({ id, children }: SortableHeaderItemProps) => {
 
 const Header = ({ showHomeButton = false, title, subtitle, children }: HeaderProps) => {
   const [isDark, setIsDark] = useState(false);
-  const [settings, setSettings] = useState({ headerTitle: 'التقرير الأسبوعي', headerSubtitle: 'نظام إدارة التقارير الأسبوعية للفرق' });
+  const [settings, setSettings] = useState<{ 
+    headerTitle: string; 
+    headerSubtitle: string;
+    logoUrl?: string;
+    themeColors?: any;
+  }>({ 
+    headerTitle: 'التقرير الأسبوعي', 
+    headerSubtitle: 'نظام إدارة التقارير الأسبوعية للفرق',
+    logoUrl: '',
+    themeColors: undefined,
+  });
   const [headerOrder, setHeaderOrder] = useLayoutOrder<HeaderItemId>('header-layout-order', ['logo', 'title', 'darkmode']);
 
   const sensors = useSensors(
@@ -89,7 +99,14 @@ const Header = ({ showHomeButton = false, title, subtitle, children }: HeaderPro
     const isDarkMode = savedTheme === 'dark' || (!savedTheme && prefersDark);
     setIsDark(isDarkMode);
     document.documentElement.classList.toggle('dark', isDarkMode);
-    setSettings(getSettings());
+    
+    const savedSettings = getSettings();
+    setSettings(savedSettings);
+    
+    // Apply saved theme colors
+    if (savedSettings.themeColors) {
+      applyThemeColors(savedSettings.themeColors);
+    }
   }, []);
 
   const toggleDarkMode = () => {
@@ -101,6 +118,7 @@ const Header = ({ showHomeButton = false, title, subtitle, children }: HeaderPro
 
   const displayTitle = title || settings.headerTitle;
   const displaySubtitle = subtitle || settings.headerSubtitle;
+  const logoSrc = settings.logoUrl || ncgrLogo;
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -117,8 +135,8 @@ const Header = ({ showHomeButton = false, title, subtitle, children }: HeaderPro
         return (
           <Link to="/" className="flex-shrink-0">
             <img 
-              src={ncgrLogo} 
-              alt="NCGR Logo" 
+              src={logoSrc} 
+              alt="Logo" 
               className="h-12 md:h-16 w-auto bg-white/90 rounded-lg p-1"
             />
           </Link>

@@ -31,9 +31,36 @@ export interface Challenge {
   updatedAt: string;
 }
 
+export interface ThemeColors {
+  primary: string;
+  secondary: string;
+  accent: string;
+  success: string;
+  highlight: string;
+}
+
 export interface Settings {
   headerTitle: string;
   headerSubtitle: string;
+  logoUrl?: string;
+  themeColors?: ThemeColors;
+  featuresTitle?: string;
+}
+
+export interface ThemeColors {
+  primary: string;
+  secondary: string;
+  accent: string;
+  success: string;
+  highlight: string;
+}
+
+export interface Settings {
+  headerTitle: string;
+  headerSubtitle: string;
+  logoUrl?: string;
+  themeColors?: ThemeColors;
+  featuresTitle?: string;
 }
 
 export interface Team {
