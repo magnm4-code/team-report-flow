@@ -178,7 +178,7 @@ const Header = ({ showHomeButton = false, title, subtitle, children }: HeaderPro
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={headerOrder} strategy={horizontalListSortingStrategy}>
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
               {headerOrder.map((id) => (
                 <SortableHeaderItem key={id} id={id}>
                   {renderHeaderItem(id)}
