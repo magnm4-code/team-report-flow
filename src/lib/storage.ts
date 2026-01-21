@@ -1,21 +1,55 @@
-import { Team, Task, Achievement, Challenge, Settings } from '@/types';
+import { Team, Task, Achievement, Challenge, Settings, ThemeColors } from '@/types';
 
 const ADMIN_PASSWORD = 'admin123';
+
+const DEFAULT_THEME_COLORS: ThemeColors = {
+  primary: '204 66% 21%',
+  secondary: '180 72% 39%',
+  accent: '199 71% 65%',
+  success: '74 54% 51%',
+  highlight: '250 32% 51%',
+};
 
 const DEFAULT_SETTINGS: Settings = {
   headerTitle: 'التقرير الأسبوعي',
   headerSubtitle: 'نظام إدارة التقارير الأسبوعية للفرق',
+  logoUrl: '',
+  themeColors: DEFAULT_THEME_COLORS,
+  featuresTitle: 'مميزات النظام',
 };
 
 // Settings
 export const getSettings = (): Settings => {
   const data = localStorage.getItem('app_settings');
-  return data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : DEFAULT_SETTINGS;
+  if (data) {
+    const parsed = JSON.parse(data);
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      themeColors: { ...DEFAULT_THEME_COLORS, ...parsed.themeColors },
+    };
+  }
+  return DEFAULT_SETTINGS;
 };
 
 export const saveSettings = (settings: Settings): void => {
   localStorage.setItem('app_settings', JSON.stringify(settings));
+  // Apply theme colors immediately
+  if (settings.themeColors) {
+    applyThemeColors(settings.themeColors);
+  }
 };
+
+export const applyThemeColors = (colors: ThemeColors): void => {
+  const root = document.documentElement;
+  root.style.setProperty('--primary', colors.primary);
+  root.style.setProperty('--secondary', colors.secondary);
+  root.style.setProperty('--accent', colors.accent);
+  root.style.setProperty('--success', colors.success);
+  root.style.setProperty('--highlight', colors.highlight);
+};
+
+export const getDefaultThemeColors = (): ThemeColors => DEFAULT_THEME_COLORS;
 
 // Teams
 export const getTeams = (): Team[] => {
