@@ -14,16 +14,213 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      achievements: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          team_id: string
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          id?: string
+          team_id: string
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          team_id?: string
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievements_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_settings: {
+        Row: {
+          created_at: string
+          features_title: string | null
+          header_subtitle: string
+          header_title: string
+          id: string
+          logo_url: string | null
+          theme_colors: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          features_title?: string | null
+          header_subtitle?: string
+          header_title?: string
+          id?: string
+          logo_url?: string | null
+          theme_colors?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          features_title?: string | null
+          header_subtitle?: string
+          header_title?: string
+          id?: string
+          logo_url?: string | null
+          theme_colors?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      challenges: {
+        Row: {
+          created_at: string
+          id: string
+          support_needed: string | null
+          team_id: string
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          support_needed?: string | null
+          team_id: string
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          support_needed?: string | null
+          team_id?: string
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenges_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          completion_rate: number
+          created_at: string
+          id: string
+          last_update_date: string
+          latest_update: string
+          status: string
+          task_text: string
+          team_id: string
+          updated_at: string
+          weekly_progress_rate: number
+        }
+        Insert: {
+          completion_rate?: number
+          created_at?: string
+          id?: string
+          last_update_date?: string
+          latest_update?: string
+          status?: string
+          task_text: string
+          team_id: string
+          updated_at?: string
+          weekly_progress_rate?: number
+        }
+        Update: {
+          completion_rate?: number
+          created_at?: string
+          id?: string
+          last_update_date?: string
+          latest_update?: string
+          status?: string
+          task_text?: string
+          team_id?: string
+          updated_at?: string
+          weekly_progress_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          passcode: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          passcode?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          passcode?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +347,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

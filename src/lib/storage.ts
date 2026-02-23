@@ -1,6 +1,5 @@
-import { Team, Task, Achievement, Challenge, Settings, ThemeColors } from '@/types';
-
-const ADMIN_PASSWORD = 'admin123';
+import { supabase } from '@/integrations/supabase/client';
+import { ThemeColors, Settings } from '@/types';
 
 const DEFAULT_THEME_COLORS: ThemeColors = {
   primary: '204 66% 21%',
@@ -19,22 +18,47 @@ const DEFAULT_SETTINGS: Settings = {
 };
 
 // Settings
-export const getSettings = (): Settings => {
-  const data = localStorage.getItem('app_settings');
+export const getSettings = async (): Promise<Settings> => {
+  const { data } = await supabase
+    .from('app_settings')
+    .select('*')
+    .limit(1)
+    .maybeSingle();
+
   if (data) {
-    const parsed = JSON.parse(data);
+    const themeColors = (data.theme_colors as Record<string, string>) || {};
     return {
-      ...DEFAULT_SETTINGS,
-      ...parsed,
-      themeColors: { ...DEFAULT_THEME_COLORS, ...parsed.themeColors },
+      headerTitle: data.header_title,
+      headerSubtitle: data.header_subtitle,
+      logoUrl: data.logo_url || '',
+      featuresTitle: data.features_title || 'مميزات النظام',
+      themeColors: { ...DEFAULT_THEME_COLORS, ...themeColors },
     };
   }
   return DEFAULT_SETTINGS;
 };
 
-export const saveSettings = (settings: Settings): void => {
-  localStorage.setItem('app_settings', JSON.stringify(settings));
-  // Apply theme colors immediately
+export const saveSettings = async (settings: Settings): Promise<void> => {
+  const { data: existing } = await supabase
+    .from('app_settings')
+    .select('id')
+    .limit(1)
+    .maybeSingle();
+
+  const payload = {
+    header_title: settings.headerTitle,
+    header_subtitle: settings.headerSubtitle,
+    logo_url: settings.logoUrl || '',
+    features_title: settings.featuresTitle || 'مميزات النظام',
+    theme_colors: JSON.parse(JSON.stringify(settings.themeColors || DEFAULT_THEME_COLORS)),
+  };
+
+  if (existing) {
+    await supabase.from('app_settings').update(payload).eq('id', existing.id);
+  } else {
+    await supabase.from('app_settings').insert(payload);
+  }
+
   if (settings.themeColors) {
     applyThemeColors(settings.themeColors);
   }
@@ -52,107 +76,167 @@ export const applyThemeColors = (colors: ThemeColors): void => {
 export const getDefaultThemeColors = (): ThemeColors => DEFAULT_THEME_COLORS;
 
 // Teams
-export const getTeams = (): Team[] => {
-  const data = localStorage.getItem('teams');
-  return data ? JSON.parse(data) : [];
+export const getTeams = async () => {
+  const { data } = await supabase
+    .from('teams')
+    .select('*')
+    .order('created_at', { ascending: false });
+  return (data || []).map(t => ({
+    id: t.id,
+    name: t.name,
+    passcode: t.passcode || undefined,
+    createdAt: t.created_at,
+    updatedAt: t.updated_at,
+  }));
 };
 
-export const saveTeams = (teams: Team[]): void => {
-  localStorage.setItem('teams', JSON.stringify(teams));
-};
-
-export const getTeam = (teamId: string): Team | undefined => {
-  return getTeams().find(t => t.id === teamId);
-};
-
-export const createTeam = (name: string, passcode?: string): Team => {
-  const teams = getTeams();
-  const now = new Date().toISOString();
-  const team: Team = {
-    id: crypto.randomUUID(),
-    name,
-    passcode: passcode || undefined,
-    createdAt: now,
-    updatedAt: now,
+export const getTeam = async (teamId: string) => {
+  const { data } = await supabase
+    .from('teams')
+    .select('*')
+    .eq('id', teamId)
+    .maybeSingle();
+  if (!data) return undefined;
+  return {
+    id: data.id,
+    name: data.name,
+    passcode: data.passcode || undefined,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
   };
-  teams.push(team);
-  saveTeams(teams);
-  return team;
 };
 
-export const updateTeam = (teamId: string, name: string, passcode?: string): void => {
-  const teams = getTeams();
-  const index = teams.findIndex(t => t.id === teamId);
-  if (index !== -1) {
-    teams[index] = {
-      ...teams[index],
-      name,
-      passcode: passcode || undefined,
-      updatedAt: new Date().toISOString(),
-    };
-    saveTeams(teams);
-  }
+export const createTeam = async (name: string, passcode?: string) => {
+  const { data } = await supabase
+    .from('teams')
+    .insert({ name, passcode: passcode || null })
+    .select()
+    .single();
+  return data ? {
+    id: data.id,
+    name: data.name,
+    passcode: data.passcode || undefined,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  } : null;
 };
 
-export const deleteTeam = (teamId: string): void => {
-  const teams = getTeams().filter(t => t.id !== teamId);
-  saveTeams(teams);
-  // Also delete team data
-  localStorage.removeItem(`tasks_${teamId}`);
-  localStorage.removeItem(`achievements_${teamId}`);
-  localStorage.removeItem(`challenges_${teamId}`);
+export const updateTeam = async (teamId: string, name: string, passcode?: string) => {
+  await supabase
+    .from('teams')
+    .update({ name, passcode: passcode || null })
+    .eq('id', teamId);
+};
+
+export const deleteTeam = async (teamId: string) => {
+  await supabase.from('teams').delete().eq('id', teamId);
 };
 
 // Tasks
-export const getTasks = (teamId: string): Task[] => {
-  const data = localStorage.getItem(`tasks_${teamId}`);
-  return data ? JSON.parse(data) : [];
+export const getTasks = async (teamId: string) => {
+  const { data } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('team_id', teamId)
+    .order('created_at', { ascending: true });
+  return (data || []).map(t => ({
+    id: t.id,
+    teamId: t.team_id,
+    taskText: t.task_text,
+    status: t.status as any,
+    completionRate: t.completion_rate,
+    weeklyProgressRate: t.weekly_progress_rate,
+    lastUpdateDate: t.last_update_date,
+    latestUpdate: t.latest_update,
+    createdAt: t.created_at,
+    updatedAt: t.updated_at,
+  }));
 };
 
-export const saveTasks = (teamId: string, tasks: Task[]): void => {
-  localStorage.setItem(`tasks_${teamId}`, JSON.stringify(tasks));
-  updateTeamTimestamp(teamId);
-};
-
-// Achievements
-export const getAchievements = (teamId: string): Achievement[] => {
-  const data = localStorage.getItem(`achievements_${teamId}`);
-  return data ? JSON.parse(data) : [];
-};
-
-export const saveAchievements = (teamId: string, achievements: Achievement[]): void => {
-  localStorage.setItem(`achievements_${teamId}`, JSON.stringify(achievements));
-  updateTeamTimestamp(teamId);
-};
-
-// Challenges
-export const getChallenges = (teamId: string): Challenge[] => {
-  const data = localStorage.getItem(`challenges_${teamId}`);
-  return data ? JSON.parse(data) : [];
-};
-
-export const saveChallenges = (teamId: string, challenges: Challenge[]): void => {
-  localStorage.setItem(`challenges_${teamId}`, JSON.stringify(challenges));
-  updateTeamTimestamp(teamId);
-};
-
-// Update team timestamp
-const updateTeamTimestamp = (teamId: string): void => {
-  const teams = getTeams();
-  const index = teams.findIndex(t => t.id === teamId);
-  if (index !== -1) {
-    teams[index].updatedAt = new Date().toISOString();
-    saveTeams(teams);
+export const saveTasks = async (teamId: string, tasks: any[]) => {
+  // Delete all and re-insert (simple approach for bulk save)
+  await supabase.from('tasks').delete().eq('team_id', teamId);
+  if (tasks.length > 0) {
+    await supabase.from('tasks').insert(
+      tasks.map(t => ({
+        id: t.id,
+        team_id: teamId,
+        task_text: t.taskText,
+        status: t.status,
+        completion_rate: t.completionRate,
+        weekly_progress_rate: t.weeklyProgressRate,
+        last_update_date: t.lastUpdateDate,
+        latest_update: t.latestUpdate,
+      }))
+    );
   }
 };
 
-// Admin authentication
-export const verifyAdminPassword = (password: string): boolean => {
-  return password === ADMIN_PASSWORD;
+// Achievements
+export const getAchievements = async (teamId: string) => {
+  const { data } = await supabase
+    .from('achievements')
+    .select('*')
+    .eq('team_id', teamId)
+    .order('created_at', { ascending: true });
+  return (data || []).map(a => ({
+    id: a.id,
+    teamId: a.team_id,
+    text: a.text,
+    date: a.date,
+    createdAt: a.created_at,
+    updatedAt: a.updated_at,
+  }));
 };
 
-export const verifyTeamPasscode = (teamId: string, passcode: string): boolean => {
-  const team = getTeam(teamId);
+export const saveAchievements = async (teamId: string, achievements: any[]) => {
+  await supabase.from('achievements').delete().eq('team_id', teamId);
+  if (achievements.length > 0) {
+    await supabase.from('achievements').insert(
+      achievements.map(a => ({
+        id: a.id,
+        team_id: teamId,
+        text: a.text,
+        date: a.date,
+      }))
+    );
+  }
+};
+
+// Challenges
+export const getChallenges = async (teamId: string) => {
+  const { data } = await supabase
+    .from('challenges')
+    .select('*')
+    .eq('team_id', teamId)
+    .order('created_at', { ascending: true });
+  return (data || []).map(c => ({
+    id: c.id,
+    teamId: c.team_id,
+    text: c.text,
+    supportNeeded: c.support_needed || undefined,
+    createdAt: c.created_at,
+    updatedAt: c.updated_at,
+  }));
+};
+
+export const saveChallenges = async (teamId: string, challenges: any[]) => {
+  await supabase.from('challenges').delete().eq('team_id', teamId);
+  if (challenges.length > 0) {
+    await supabase.from('challenges').insert(
+      challenges.map(c => ({
+        id: c.id,
+        team_id: teamId,
+        text: c.text,
+        support_needed: c.supportNeeded || null,
+      }))
+    );
+  }
+};
+
+// Team passcode verification
+export const verifyTeamPasscode = async (teamId: string, passcode: string): Promise<boolean> => {
+  const team = await getTeam(teamId);
   if (!team) return false;
   if (!team.passcode) return true;
   return team.passcode === passcode;
