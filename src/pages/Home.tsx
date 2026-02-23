@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { verifyAdminPassword, getTeam, verifyTeamPasscode, getSettings } from '@/lib/storage';
+import { getTeam, verifyTeamPasscode, getSettings } from '@/lib/storage';
 import { Shield, Users, FileText, ClipboardList, Trophy, AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import Header from '@/components/layout/Header';
@@ -31,10 +31,8 @@ type CardId = 'admin' | 'reports' | 'team';
 
 const Home = () => {
   const navigate = useNavigate();
-  const [adminPassword, setAdminPassword] = useState('');
   const [teamId, setTeamId] = useState('');
   const [teamPasscode, setTeamPasscode] = useState('');
-  const [adminDialogOpen, setAdminDialogOpen] = useState(false);
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
   const [settings, setSettings] = useState<{ headerTitle: string; headerSubtitle: string; featuresTitle?: string }>({ headerTitle: 'التقرير الأسبوعي', headerSubtitle: 'نظام إدارة التقارير الأسبوعية للفرق', featuresTitle: 'مميزات النظام' });
   const [cardOrder, setCardOrder] = useLayoutOrder<CardId>('home-cards-order', ['admin', 'reports', 'team']);
@@ -45,43 +43,24 @@ const Home = () => {
   );
 
   useEffect(() => {
-    setSettings(getSettings());
+    getSettings().then(setSettings);
   }, []);
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleTeamAccess = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (verifyAdminPassword(adminPassword)) {
-      navigate('/admin');
-      setAdminDialogOpen(false);
-    } else {
-      toast({
-        title: 'خطأ في المصادقة',
-        description: 'كلمة المرور غير صحيحة',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleTeamAccess = (e: React.FormEvent) => {
-    e.preventDefault();
-    const team = getTeam(teamId.trim());
+    const team = await getTeam(teamId.trim());
     
     if (!team) {
-      toast({
-        title: 'فريق غير موجود',
-        description: 'يرجى التحقق من معرف الفريق',
-        variant: 'destructive',
-      });
+      toast({ title: 'فريق غير موجود', description: 'يرجى التحقق من معرف الفريق', variant: 'destructive' });
       return;
     }
 
-    if (team.passcode && !verifyTeamPasscode(teamId, teamPasscode)) {
-      toast({
-        title: 'رمز الدخول غير صحيح',
-        description: 'يرجى إدخال رمز الدخول الصحيح',
-        variant: 'destructive',
-      });
-      return;
+    if (team.passcode) {
+      const valid = await verifyTeamPasscode(teamId, teamPasscode);
+      if (!valid) {
+        toast({ title: 'رمز الدخول غير صحيح', description: 'يرجى إدخال رمز الدخول الصحيح', variant: 'destructive' });
+        return;
+      }
     }
 
     navigate(`/team/${teamId}/fill/tasks`);
@@ -103,7 +82,7 @@ const Home = () => {
         return (
           <Card 
             className="card-elevated hover:shadow-xl transition-all duration-300 cursor-pointer group h-full"
-            onClick={() => setAdminDialogOpen(true)}
+            onClick={() => navigate('/auth')}
           >
             <CardHeader className="text-center pb-2">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -166,61 +145,25 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
       <div className="gradient-primary text-primary-foreground">
         <Header />
         <div className="container mx-auto px-4 pb-16">
           <div className="max-w-3xl mx-auto text-center">
-            <p className="text-lg opacity-80">
-              تتبع المهام والإنجازات والتحديات بسهولة
-            </p>
+            <p className="text-lg opacity-80">تتبع المهام والإنجازات والتحديات بسهولة</p>
           </div>
         </div>
       </div>
 
-      {/* Actions Section */}
       <div className="container mx-auto px-4 py-16">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={cardOrder} strategy={rectSortingStrategy}>
             <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-8">
               {cardOrder.map((id) => (
-                <SortableItem key={id} id={id}>
-                  {renderCard(id)}
-                </SortableItem>
+                <SortableItem key={id} id={id}>{renderCard(id)}</SortableItem>
               ))}
             </div>
           </SortableContext>
         </DndContext>
-
-        {/* Admin Dialog */}
-        <Dialog open={adminDialogOpen} onOpenChange={setAdminDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>تسجيل دخول المسؤول</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleAdminLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="adminPassword">كلمة المرور</Label>
-                <Input
-                  id="adminPassword"
-                  type="password"
-                  value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
-                  placeholder="أدخل كلمة المرور"
-                  className="input-rtl"
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full btn-teal">
-                دخول
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
 
         {/* Team Dialog */}
         <Dialog open={teamDialogOpen} onOpenChange={setTeamDialogOpen}>
@@ -231,29 +174,13 @@ const Home = () => {
             <form onSubmit={handleTeamAccess} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="teamId">معرف الفريق</Label>
-                <Input
-                  id="teamId"
-                  value={teamId}
-                  onChange={(e) => setTeamId(e.target.value)}
-                  placeholder="أدخل معرف الفريق"
-                  className="input-rtl"
-                  required
-                />
+                <Input id="teamId" value={teamId} onChange={(e) => setTeamId(e.target.value)} placeholder="أدخل معرف الفريق" className="input-rtl" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="teamPasscode">رمز الدخول (اختياري)</Label>
-                <Input
-                  id="teamPasscode"
-                  type="password"
-                  value={teamPasscode}
-                  onChange={(e) => setTeamPasscode(e.target.value)}
-                  placeholder="أدخل رمز الدخول إذا كان مطلوباً"
-                  className="input-rtl"
-                />
+                <Input id="teamPasscode" type="password" value={teamPasscode} onChange={(e) => setTeamPasscode(e.target.value)} placeholder="أدخل رمز الدخول إذا كان مطلوباً" className="input-rtl" />
               </div>
-              <Button type="submit" className="w-full btn-teal">
-                دخول
-              </Button>
+              <Button type="submit" className="w-full btn-teal">دخول</Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -267,27 +194,21 @@ const Home = () => {
                 <ClipboardList className="w-6 h-6 text-success" />
               </div>
               <h3 className="font-semibold mb-2">إدارة المهام</h3>
-              <p className="text-sm text-muted-foreground">
-                تتبع المهام ونسب الإنجاز والتقدم الأسبوعي
-              </p>
+              <p className="text-sm text-muted-foreground">تتبع المهام ونسب الإنجاز والتقدم الأسبوعي</p>
             </div>
             <div className="text-center p-6">
               <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-highlight/20 flex items-center justify-center">
                 <Trophy className="w-6 h-6 text-highlight" />
               </div>
               <h3 className="font-semibold mb-2">توثيق الإنجازات</h3>
-              <p className="text-sm text-muted-foreground">
-                سجل الإنجازات الأسبوعية للفريق
-              </p>
+              <p className="text-sm text-muted-foreground">سجل الإنجازات الأسبوعية للفريق</p>
             </div>
             <div className="text-center p-6">
               <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-destructive/20 flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 text-destructive" />
               </div>
               <h3 className="font-semibold mb-2">رصد التحديات</h3>
-              <p className="text-sm text-muted-foreground">
-                توثيق الصعوبات والدعم المطلوب
-              </p>
+              <p className="text-sm text-muted-foreground">توثيق الصعوبات والدعم المطلوب</p>
             </div>
           </div>
         </div>
