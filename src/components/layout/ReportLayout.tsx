@@ -16,7 +16,7 @@ const ReportLayout = ({ mode }: ReportLayoutProps) => {
 
   useEffect(() => {
     if (teamId) {
-      getTeam(teamId).then((t) => {
+      getTeam(Number(teamId)).then((t) => {
         setTeam(t || null);
         setLoading(false);
       });

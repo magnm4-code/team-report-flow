@@ -84,8 +84,8 @@ const Admin = () => {
     setDeleteDialogOpen(true);
   };
 
-  const copyTeamId = (teamId: string) => {
-    navigator.clipboard.writeText(teamId);
+  const copyTeamId = (teamId: number) => {
+    navigator.clipboard.writeText(String(teamId));
     toast({ title: 'تم النسخ', description: 'تم نسخ معرف الفريق' });
   };
 
@@ -175,7 +175,7 @@ const Admin = () => {
                       <TableCell className="font-medium">{team.name}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <code className="text-xs bg-muted px-2 py-1 rounded">{team.id.slice(0, 8)}...</code>
+                          <code className="text-xs bg-muted px-2 py-1 rounded">{team.id}</code>
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyTeamId(team.id)}>
                             <Copy className="w-3 h-3" />
                           </Button>

@@ -6,7 +6,8 @@ import { Achievement } from '@/types';
 import { Trophy } from 'lucide-react';
 
 const AchievementsView = () => {
-  const { teamId } = useParams();
+  const { teamId: teamIdParam } = useParams();
+  const teamId = Number(teamIdParam);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {

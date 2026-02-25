@@ -11,7 +11,8 @@ import { Plus, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const ChallengesFill = () => {
-  const { teamId } = useParams();
+  const { teamId: teamIdParam } = useParams();
+  const teamId = Number(teamIdParam);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -32,16 +33,17 @@ const ChallengesFill = () => {
     e.preventDefault();
     if (!teamId || !text.trim()) return;
     const now = new Date().toISOString();
-    let updated: Challenge[];
+    let updated: any[];
     if (editingItem) {
       updated = challenges.map(c => c.id === editingItem.id ? { ...c, text: text.trim(), supportNeeded: supportNeeded.trim() || undefined, updatedAt: now } : c);
       toast({ title: 'تم تحديث التحدي' });
     } else {
-      updated = [...challenges, { id: crypto.randomUUID(), teamId, text: text.trim(), supportNeeded: supportNeeded.trim() || undefined, createdAt: now, updatedAt: now }];
+      updated = [...challenges, { teamId, text: text.trim(), supportNeeded: supportNeeded.trim() || undefined, createdAt: now, updatedAt: now }];
       toast({ title: 'تمت إضافة التحدي' });
     }
-    setChallenges(updated);
     await saveChallenges(teamId, updated);
+    const refreshed = await getChallenges(teamId);
+    setChallenges(refreshed);
     setDialogOpen(false);
     resetForm();
   };

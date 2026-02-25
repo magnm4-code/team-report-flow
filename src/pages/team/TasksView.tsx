@@ -7,7 +7,8 @@ import { Task, TaskStatus } from '@/types';
 import { ClipboardList } from 'lucide-react';
 
 const TasksView = () => {
-  const { teamId } = useParams();
+  const { teamId: teamIdParam } = useParams();
+  const teamId = Number(teamIdParam);
   const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
