@@ -6,7 +6,8 @@ import { Challenge } from '@/types';
 import { AlertTriangle } from 'lucide-react';
 
 const ChallengesView = () => {
-  const { teamId } = useParams();
+  const { teamId: teamIdParam } = useParams();
+  const teamId = Number(teamIdParam);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
 
   useEffect(() => {

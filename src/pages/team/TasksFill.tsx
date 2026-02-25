@@ -16,7 +16,8 @@ import { toast } from '@/hooks/use-toast';
 const TASK_STATUSES: TaskStatus[] = ['تطوير', 'دراسة', 'مراجعة', 'معلقة', 'دراسة و تطوير'];
 
 const TasksFill = () => {
-  const { teamId } = useParams();
+  const { teamId: teamIdParam } = useParams();
+  const teamId = Number(teamIdParam);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -47,12 +48,14 @@ const TasksFill = () => {
       updatedTasks = tasks.map(t => t.id === editingTask.id ? { ...t, taskText: taskText.trim(), status, completionRate: Math.min(100, Math.max(0, completionRate)), weeklyProgressRate: Math.min(100, Math.max(0, weeklyProgressRate)), lastUpdateDate, latestUpdate: latestUpdate.trim(), updatedAt: now } : t);
       toast({ title: 'تم تحديث المهمة' });
     } else {
-      const newTask: Task = { id: crypto.randomUUID(), teamId, taskText: taskText.trim(), status, completionRate: Math.min(100, Math.max(0, completionRate)), weeklyProgressRate: Math.min(100, Math.max(0, weeklyProgressRate)), lastUpdateDate, latestUpdate: latestUpdate.trim(), createdAt: now, updatedAt: now };
-      updatedTasks = [...tasks, newTask];
+      const newTask: Omit<Task, 'id'> & { id?: number } = { teamId, taskText: taskText.trim(), status, completionRate: Math.min(100, Math.max(0, completionRate)), weeklyProgressRate: Math.min(100, Math.max(0, weeklyProgressRate)), lastUpdateDate, latestUpdate: latestUpdate.trim(), createdAt: now, updatedAt: now };
+      updatedTasks = [...tasks, newTask as Task];
       toast({ title: 'تمت إضافة المهمة' });
     }
-    setTasks(updatedTasks);
     await saveTasks(teamId, updatedTasks);
+    // Reload from DB to get proper IDs
+    const refreshed = await getTasks(teamId);
+    setTasks(refreshed);
     setDialogOpen(false);
     resetForm();
   };
@@ -71,7 +74,7 @@ const TasksFill = () => {
     if (!teamId) return;
     const achievements = await getAchievements(teamId);
     const now = new Date().toISOString();
-    const newAchievement: Achievement = { id: crypto.randomUUID(), teamId, text: `${task.taskText}\n\nآخر تحديث: ${task.latestUpdate}`, date: now.split('T')[0], createdAt: now, updatedAt: now };
+    const newAchievement = { teamId, text: `${task.taskText}\n\nآخر تحديث: ${task.latestUpdate}`, date: now.split('T')[0], createdAt: now, updatedAt: now };
     await saveAchievements(teamId, [...achievements, newAchievement]);
     const updatedTasks = tasks.filter(t => t.id !== task.id);
     setTasks(updatedTasks);

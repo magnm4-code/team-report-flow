@@ -11,7 +11,7 @@ const ManagerReports = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
   const [teamData, setTeamData] = useState<{
-    [key: string]: { tasks: Task[]; achievements: Achievement[]; challenges: Challenge[] };
+    [key: number]: { tasks: Task[]; achievements: Achievement[]; challenges: Challenge[] };
   }>({});
 
   useEffect(() => {
@@ -33,7 +33,7 @@ const ManagerReports = () => {
     loadData();
   }, []);
 
-  const filteredTeams = selectedTeamId === 'all' ? teams : teams.filter(t => t.id === selectedTeamId);
+  const filteredTeams = selectedTeamId === 'all' ? teams : teams.filter(t => String(t.id) === selectedTeamId);
 
   const formatDate = (dateString: string) => {
     return new Intl.DateTimeFormat('ar-SA', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(dateString));
@@ -70,7 +70,7 @@ const ManagerReports = () => {
                 <SelectTrigger className="w-64"><SelectValue placeholder="اختر الفريق" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">جميع الفرق</SelectItem>
-                  {teams.map(team => (<SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>))}
+                  {teams.map(team => (<SelectItem key={team.id} value={String(team.id)}>{team.name}</SelectItem>))}
                 </SelectContent>
               </Select>
               <span className="text-sm text-muted-foreground">({filteredTeams.length} فريق)</span>

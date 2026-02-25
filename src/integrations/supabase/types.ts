@@ -18,24 +18,24 @@ export type Database = {
         Row: {
           created_at: string
           date: string
-          id: string
-          team_id: string
+          id: number
+          team_id: number
           text: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           date?: string
-          id?: string
-          team_id: string
+          id?: number
+          team_id: number
           text: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           date?: string
-          id?: string
-          team_id?: string
+          id?: number
+          team_id?: number
           text?: string
           updated_at?: string
         }
@@ -85,25 +85,25 @@ export type Database = {
       challenges: {
         Row: {
           created_at: string
-          id: string
+          id: number
           support_needed: string | null
-          team_id: string
+          team_id: number
           text: string
           updated_at: string
         }
         Insert: {
           created_at?: string
-          id?: string
+          id?: number
           support_needed?: string | null
-          team_id: string
+          team_id: number
           text: string
           updated_at?: string
         }
         Update: {
           created_at?: string
-          id?: string
+          id?: number
           support_needed?: string | null
-          team_id?: string
+          team_id?: number
           text?: string
           updated_at?: string
         }
@@ -121,36 +121,36 @@ export type Database = {
         Row: {
           completion_rate: number
           created_at: string
-          id: string
+          id: number
           last_update_date: string
           latest_update: string
           status: string
           task_text: string
-          team_id: string
+          team_id: number
           updated_at: string
           weekly_progress_rate: number
         }
         Insert: {
           completion_rate?: number
           created_at?: string
-          id?: string
+          id?: number
           last_update_date?: string
           latest_update?: string
           status?: string
           task_text: string
-          team_id: string
+          team_id: number
           updated_at?: string
           weekly_progress_rate?: number
         }
         Update: {
           completion_rate?: number
           created_at?: string
-          id?: string
+          id?: number
           last_update_date?: string
           latest_update?: string
           status?: string
           task_text?: string
-          team_id?: string
+          team_id?: number
           updated_at?: string
           weekly_progress_rate?: number
         }
@@ -167,21 +167,21 @@ export type Database = {
       teams: {
         Row: {
           created_at: string
-          id: string
+          id: number
           name: string
           passcode: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
-          id?: string
+          id?: number
           name: string
           passcode?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
-          id?: string
+          id?: number
           name?: string
           passcode?: string | null
           updated_at?: string

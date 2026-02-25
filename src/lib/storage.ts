@@ -90,7 +90,7 @@ export const getTeams = async () => {
   }));
 };
 
-export const getTeam = async (teamId: string) => {
+export const getTeam = async (teamId: number) => {
   const { data } = await supabase
     .from('teams')
     .select('*')
@@ -121,19 +121,19 @@ export const createTeam = async (name: string, passcode?: string) => {
   } : null;
 };
 
-export const updateTeam = async (teamId: string, name: string, passcode?: string) => {
+export const updateTeam = async (teamId: number, name: string, passcode?: string) => {
   await supabase
     .from('teams')
     .update({ name, passcode: passcode || null })
     .eq('id', teamId);
 };
 
-export const deleteTeam = async (teamId: string) => {
+export const deleteTeam = async (teamId: number) => {
   await supabase.from('teams').delete().eq('id', teamId);
 };
 
 // Tasks
-export const getTasks = async (teamId: string) => {
+export const getTasks = async (teamId: number) => {
   const { data } = await supabase
     .from('tasks')
     .select('*')
@@ -153,13 +153,11 @@ export const getTasks = async (teamId: string) => {
   }));
 };
 
-export const saveTasks = async (teamId: string, tasks: any[]) => {
-  // Delete all and re-insert (simple approach for bulk save)
+export const saveTasks = async (teamId: number, tasks: any[]) => {
   await supabase.from('tasks').delete().eq('team_id', teamId);
   if (tasks.length > 0) {
     await supabase.from('tasks').insert(
       tasks.map(t => ({
-        id: t.id,
         team_id: teamId,
         task_text: t.taskText,
         status: t.status,
@@ -173,7 +171,7 @@ export const saveTasks = async (teamId: string, tasks: any[]) => {
 };
 
 // Achievements
-export const getAchievements = async (teamId: string) => {
+export const getAchievements = async (teamId: number) => {
   const { data } = await supabase
     .from('achievements')
     .select('*')
@@ -189,12 +187,11 @@ export const getAchievements = async (teamId: string) => {
   }));
 };
 
-export const saveAchievements = async (teamId: string, achievements: any[]) => {
+export const saveAchievements = async (teamId: number, achievements: any[]) => {
   await supabase.from('achievements').delete().eq('team_id', teamId);
   if (achievements.length > 0) {
     await supabase.from('achievements').insert(
       achievements.map(a => ({
-        id: a.id,
         team_id: teamId,
         text: a.text,
         date: a.date,
@@ -204,7 +201,7 @@ export const saveAchievements = async (teamId: string, achievements: any[]) => {
 };
 
 // Challenges
-export const getChallenges = async (teamId: string) => {
+export const getChallenges = async (teamId: number) => {
   const { data } = await supabase
     .from('challenges')
     .select('*')
@@ -220,12 +217,11 @@ export const getChallenges = async (teamId: string) => {
   }));
 };
 
-export const saveChallenges = async (teamId: string, challenges: any[]) => {
+export const saveChallenges = async (teamId: number, challenges: any[]) => {
   await supabase.from('challenges').delete().eq('team_id', teamId);
   if (challenges.length > 0) {
     await supabase.from('challenges').insert(
       challenges.map(c => ({
-        id: c.id,
         team_id: teamId,
         text: c.text,
         support_needed: c.supportNeeded || null,
@@ -235,7 +231,7 @@ export const saveChallenges = async (teamId: string, challenges: any[]) => {
 };
 
 // Team passcode verification
-export const verifyTeamPasscode = async (teamId: string, passcode: string): Promise<boolean> => {
+export const verifyTeamPasscode = async (teamId: number, passcode: string): Promise<boolean> => {
   const team = await getTeam(teamId);
   if (!team) return false;
   if (!team.passcode) return true;

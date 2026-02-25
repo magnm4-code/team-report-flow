@@ -1,8 +1,8 @@
 export type TaskStatus = 'تطوير' | 'دراسة' | 'مراجعة' | 'معلقة' | 'دراسة و تطوير';
 
 export interface Task {
-  id: string;
-  teamId: string;
+  id: number;
+  teamId: number;
   taskText: string;
   status: TaskStatus;
   completionRate: number;
@@ -14,8 +14,8 @@ export interface Task {
 }
 
 export interface Achievement {
-  id: string;
-  teamId: string;
+  id: number;
+  teamId: number;
   text: string;
   date: string;
   createdAt: string;
@@ -23,8 +23,8 @@ export interface Achievement {
 }
 
 export interface Challenge {
-  id: string;
-  teamId: string;
+  id: number;
+  teamId: number;
   text: string;
   supportNeeded?: string;
   createdAt: string;
@@ -48,7 +48,7 @@ export interface Settings {
 }
 
 export interface Team {
-  id: string;
+  id: number;
   name: string;
   passcode?: string;
   createdAt: string;

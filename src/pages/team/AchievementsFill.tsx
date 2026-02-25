@@ -12,7 +12,8 @@ import { Plus, Edit, Trash2, Trophy } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const AchievementsFill = () => {
-  const { teamId } = useParams();
+  const { teamId: teamIdParam } = useParams();
+  const teamId = Number(teamIdParam);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -33,16 +34,17 @@ const AchievementsFill = () => {
     e.preventDefault();
     if (!teamId || !text.trim()) return;
     const now = new Date().toISOString();
-    let updated: Achievement[];
+    let updated: any[];
     if (editingItem) {
       updated = achievements.map(a => a.id === editingItem.id ? { ...a, text: text.trim(), date, updatedAt: now } : a);
       toast({ title: 'تم تحديث الإنجاز' });
     } else {
-      updated = [...achievements, { id: crypto.randomUUID(), teamId, text: text.trim(), date, createdAt: now, updatedAt: now }];
+      updated = [...achievements, { teamId, text: text.trim(), date, createdAt: now, updatedAt: now }];
       toast({ title: 'تمت إضافة الإنجاز' });
     }
-    setAchievements(updated);
     await saveAchievements(teamId, updated);
+    const refreshed = await getAchievements(teamId);
+    setAchievements(refreshed);
     setDialogOpen(false);
     resetForm();
   };

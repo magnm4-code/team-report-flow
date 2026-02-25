@@ -48,7 +48,12 @@ const Home = () => {
 
   const handleTeamAccess = async (e: React.FormEvent) => {
     e.preventDefault();
-    const team = await getTeam(teamId.trim());
+    const numericId = Number(teamId.trim());
+    if (isNaN(numericId)) {
+      toast({ title: 'معرف غير صالح', description: 'يرجى إدخال معرف رقمي صحيح', variant: 'destructive' });
+      return;
+    }
+    const team = await getTeam(numericId);
     
     if (!team) {
       toast({ title: 'فريق غير موجود', description: 'يرجى التحقق من معرف الفريق', variant: 'destructive' });
@@ -56,14 +61,14 @@ const Home = () => {
     }
 
     if (team.passcode) {
-      const valid = await verifyTeamPasscode(teamId, teamPasscode);
+      const valid = await verifyTeamPasscode(numericId, teamPasscode);
       if (!valid) {
         toast({ title: 'رمز الدخول غير صحيح', description: 'يرجى إدخال رمز الدخول الصحيح', variant: 'destructive' });
         return;
       }
     }
 
-    navigate(`/team/${teamId}/fill/tasks`);
+    navigate(`/team/${numericId}/fill/tasks`);
     setTeamDialogOpen(false);
   };
 
