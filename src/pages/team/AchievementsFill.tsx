@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 const AchievementsFill = () => {
   const { teamId: teamIdParam } = useParams();
   const teamId = Number(teamIdParam);
+  const { t } = useTranslation();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -22,9 +24,7 @@ const AchievementsFill = () => {
   const [text, setText] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
-  useEffect(() => {
-    if (teamId) { getAchievements(teamId).then(setAchievements); }
-  }, [teamId]);
+  useEffect(() => { if (teamId) { getAchievements(teamId).then(setAchievements); } }, [teamId]);
 
   const resetForm = () => { setText(''); setDate(new Date().toISOString().split('T')[0]); setEditingItem(null); };
   const openAddDialog = () => { resetForm(); setDialogOpen(true); };
@@ -37,14 +37,13 @@ const AchievementsFill = () => {
     let updated: any[];
     if (editingItem) {
       updated = achievements.map(a => a.id === editingItem.id ? { ...a, text: text.trim(), date, updatedAt: now } : a);
-      toast({ title: 'تم تحديث الإنجاز' });
+      toast({ title: t('achievements.updatedToast') });
     } else {
       updated = [...achievements, { teamId, text: text.trim(), date, createdAt: now, updatedAt: now }];
-      toast({ title: 'تمت إضافة الإنجاز' });
+      toast({ title: t('achievements.addedToast') });
     }
     await saveAchievements(teamId, updated);
-    const refreshed = await getAchievements(teamId);
-    setAchievements(refreshed);
+    setAchievements(await getAchievements(teamId));
     setDialogOpen(false);
     resetForm();
   };
@@ -56,18 +55,18 @@ const AchievementsFill = () => {
     await saveAchievements(teamId, updated);
     setDeleteDialogOpen(false);
     setSelectedItem(null);
-    toast({ title: 'تم حذف الإنجاز' });
+    toast({ title: t('achievements.deletedToast') });
   };
 
   return (
     <Card className="card-elevated animate-fade-in">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2"><Trophy className="w-5 h-5 text-success" />المهام المنجزة لهذا الأسبوع</CardTitle>
-        <Button className="btn-teal" onClick={openAddDialog}><Plus className="w-4 h-4 ml-2" />إضافة إنجاز</Button>
+        <CardTitle className="flex items-center gap-2"><Trophy className="w-5 h-5 text-success" />{t('achievements.title')}</CardTitle>
+        <Button className="btn-teal" onClick={openAddDialog}><Plus className="w-4 h-4 me-2" />{t('achievements.addAchievement')}</Button>
       </CardHeader>
       <CardContent>
         {achievements.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground"><Trophy className="w-12 h-12 mx-auto mb-4 opacity-30" /><p>لا توجد إنجازات مسجلة</p><p className="text-sm mt-2">أضف إنجازات الفريق أو أنجز مهام من صفحة المهام</p></div>
+          <div className="text-center py-12 text-muted-foreground"><Trophy className="w-12 h-12 mx-auto mb-4 opacity-30" /><p>{t('achievements.noAchievements')}</p><p className="text-sm mt-2">{t('achievements.noAchievementsHint')}</p></div>
         ) : (
           <div className="space-y-4">
             {achievements.map((item) => (
@@ -75,7 +74,7 @@ const AchievementsFill = () => {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <p className="whitespace-pre-wrap text-foreground">{item.text}</p>
-                    <p className="text-sm text-muted-foreground mt-2">التاريخ: {item.date}</p>
+                    <p className="text-sm text-muted-foreground mt-2">{t('achievements.dateLabel')} {item.date}</p>
                   </div>
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(item)}><Edit className="w-4 h-4" /></Button>
@@ -90,13 +89,13 @@ const AchievementsFill = () => {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>{editingItem ? 'تعديل الإنجاز' : 'إضافة إنجاز جديد'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingItem ? t('achievements.edit') : t('achievements.addNew')}</DialogTitle></DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
-            <div className="space-y-2"><Label>وصف الإنجاز</Label><Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="أدخل وصف الإنجاز" className="input-rtl min-h-32" required /></div>
-            <div className="space-y-2"><Label>التاريخ</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+            <div className="space-y-2"><Label>{t('achievements.descField')}</Label><Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={t('achievements.descPlaceholder')} className="min-h-32" required /></div>
+            <div className="space-y-2"><Label>{t('achievements.dateField')}</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>إلغاء</Button>
-              <Button type="submit" className="btn-teal">{editingItem ? 'حفظ التغييرات' : 'إضافة'}</Button>
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit" className="btn-teal">{editingItem ? t('common.saveChanges') : t('common.add')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -104,11 +103,11 @@ const AchievementsFill = () => {
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>حذف الإنجاز</DialogTitle></DialogHeader>
-          <p className="text-muted-foreground">هل أنت متأكد من حذف هذا الإنجاز؟</p>
+          <DialogHeader><DialogTitle>{t('achievements.deleteTitle')}</DialogTitle></DialogHeader>
+          <p className="text-muted-foreground">{t('achievements.confirmDelete')}</p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>إلغاء</Button>
-            <Button variant="destructive" onClick={handleDelete}>حذف</Button>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>{t('common.cancel')}</Button>
+            <Button variant="destructive" onClick={handleDelete}>{t('common.delete')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

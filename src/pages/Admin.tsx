@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +16,8 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { user, isAdmin, loading, signOut } = useAuth();
+  const { t, i18n } = useTranslation();
+  const { user, loading, signOut } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -25,96 +27,69 @@ const Admin = () => {
   const [teamPasscode, setTeamPasscode] = useState('');
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth');
-    }
+    if (!loading && !user) navigate('/auth');
   }, [user, loading, navigate]);
 
-  useEffect(() => {
-    loadTeams();
-  }, []);
+  useEffect(() => { loadTeams(); }, []);
 
-  const loadTeams = async () => {
-    const data = await getTeams();
-    setTeams(data);
-  };
+  const loadTeams = async () => setTeams(await getTeams());
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!teamName.trim()) return;
-    
     await createTeam(teamName.trim(), teamPasscode.trim() || undefined);
     await loadTeams();
-    setTeamName('');
-    setTeamPasscode('');
-    setCreateDialogOpen(false);
-    toast({ title: 'تم إنشاء الفريق', description: `تم إنشاء فريق "${teamName}" بنجاح` });
+    setTeamName(''); setTeamPasscode(''); setCreateDialogOpen(false);
+    toast({ title: t('admin.createdToast'), description: t('admin.createdToastDesc', { name: teamName }) });
   };
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTeam || !teamName.trim()) return;
-    
     await updateTeam(selectedTeam.id, teamName.trim(), teamPasscode.trim() || undefined);
     await loadTeams();
-    setEditDialogOpen(false);
-    setSelectedTeam(null);
-    toast({ title: 'تم تحديث الفريق', description: 'تم حفظ التغييرات بنجاح' });
+    setEditDialogOpen(false); setSelectedTeam(null);
+    toast({ title: t('admin.updatedToast'), description: t('admin.updatedToastDesc') });
   };
 
   const handleDelete = async () => {
     if (!selectedTeam) return;
-    
     await deleteTeam(selectedTeam.id);
     await loadTeams();
-    setDeleteDialogOpen(false);
-    setSelectedTeam(null);
-    toast({ title: 'تم حذف الفريق', description: 'تم حذف الفريق وجميع بياناته' });
+    setDeleteDialogOpen(false); setSelectedTeam(null);
+    toast({ title: t('admin.deletedToast'), description: t('admin.deletedToastDesc') });
   };
 
   const openEditDialog = (team: Team) => {
-    setSelectedTeam(team);
-    setTeamName(team.name);
-    setTeamPasscode(team.passcode || '');
-    setEditDialogOpen(true);
+    setSelectedTeam(team); setTeamName(team.name); setTeamPasscode(team.passcode || ''); setEditDialogOpen(true);
   };
-
-  const openDeleteDialog = (team: Team) => {
-    setSelectedTeam(team);
-    setDeleteDialogOpen(true);
-  };
+  const openDeleteDialog = (team: Team) => { setSelectedTeam(team); setDeleteDialogOpen(true); };
 
   const copyTeamId = (teamId: number) => {
     navigator.clipboard.writeText(String(teamId));
-    toast({ title: 'تم النسخ', description: 'تم نسخ معرف الفريق' });
+    toast({ title: t('common.copied'), description: t('admin.idCopied') });
   };
 
   const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(dateString));
+    return new Intl.DateTimeFormat(i18n.language === 'ar' ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(dateString));
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
+  const handleSignOut = async () => { await signOut(); navigate('/'); };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">جاري التحميل...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center">{t('common.loading')}</div>;
   if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background">
-      <Header title="لوحة الإدارة" subtitle="إدارة الفرق والتقارير">
+      <Header title={t('admin.title')} subtitle={t('admin.subtitle')}>
         <Button variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10" onClick={() => navigate('/admin/settings')}>
-          <Settings className="w-4 h-4 ml-2" />
-          الإعدادات
+          <Settings className="w-4 h-4 me-2" />{t('admin.settings')}
         </Button>
         <Button variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10" onClick={() => navigate('/')}>
-          <Home className="w-4 h-4 ml-2" />
-          الرئيسية
+          <Home className="w-4 h-4 me-2" />{t('common.home')}
         </Button>
         <Button variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10" onClick={handleSignOut}>
-          <LogOut className="w-4 h-4 ml-2" />
-          خروج
+          <LogOut className="w-4 h-4 me-2" />{t('common.signOut')}
         </Button>
       </Header>
 
@@ -123,30 +98,30 @@ const Admin = () => {
           <Card className="card-elevated">
             <CardContent className="pt-6">
               <div className="text-3xl font-bold text-primary">{teams.length}</div>
-              <div className="text-sm text-muted-foreground">إجمالي الفرق</div>
+              <div className="text-sm text-muted-foreground">{t('admin.totalTeams')}</div>
             </CardContent>
           </Card>
         </div>
 
         <Card className="card-elevated">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>الفرق</CardTitle>
+            <CardTitle>{t('admin.teams')}</CardTitle>
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="btn-teal"><Plus className="w-4 h-4 ml-2" />إضافة فريق</Button>
+                <Button className="btn-teal"><Plus className="w-4 h-4 me-2" />{t('admin.addTeam')}</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
-                <DialogHeader><DialogTitle>إنشاء فريق جديد</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>{t('admin.newTeamTitle')}</DialogTitle></DialogHeader>
                 <form onSubmit={handleCreate} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="newTeamName">اسم الفريق</Label>
-                    <Input id="newTeamName" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="أدخل اسم الفريق" className="input-rtl" required />
+                    <Label htmlFor="newTeamName">{t('admin.teamName')}</Label>
+                    <Input id="newTeamName" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder={t('admin.teamNamePlaceholder')} required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="newTeamPasscode">رمز الدخول (اختياري)</Label>
-                    <Input id="newTeamPasscode" value={teamPasscode} onChange={(e) => setTeamPasscode(e.target.value)} placeholder="أدخل رمز دخول للفريق" className="input-rtl" />
+                    <Label htmlFor="newTeamPasscode">{t('admin.teamPasscode')}</Label>
+                    <Input id="newTeamPasscode" value={teamPasscode} onChange={(e) => setTeamPasscode(e.target.value)} placeholder={t('admin.teamPasscodePlaceholder')} />
                   </div>
-                  <Button type="submit" className="w-full btn-teal">إنشاء الفريق</Button>
+                  <Button type="submit" className="w-full btn-teal">{t('admin.createTeam')}</Button>
                 </form>
               </DialogContent>
             </Dialog>
@@ -154,19 +129,18 @@ const Admin = () => {
           <CardContent>
             {teams.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
-                <p>لا توجد فرق حالياً</p>
-                <p className="text-sm mt-2">ابدأ بإنشاء فريق جديد</p>
+                <p>{t('admin.noTeams')}</p><p className="text-sm mt-2">{t('admin.noTeamsHint')}</p>
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow className="table-header">
-                    <TableHead>اسم الفريق</TableHead>
-                    <TableHead>معرف الفريق</TableHead>
-                    <TableHead>رمز الدخول</TableHead>
-                    <TableHead>تاريخ الإنشاء</TableHead>
-                    <TableHead>آخر تحديث</TableHead>
-                    <TableHead className="text-left">الإجراءات</TableHead>
+                    <TableHead>{t('admin.colTeamName')}</TableHead>
+                    <TableHead>{t('admin.colTeamId')}</TableHead>
+                    <TableHead>{t('admin.colPasscode')}</TableHead>
+                    <TableHead>{t('admin.colCreated')}</TableHead>
+                    <TableHead>{t('admin.colUpdated')}</TableHead>
+                    <TableHead>{t('admin.colActions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -176,16 +150,14 @@ const Admin = () => {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <code className="text-xs bg-muted px-2 py-1 rounded">{team.id}</code>
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyTeamId(team.id)}>
-                            <Copy className="w-3 h-3" />
-                          </Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyTeamId(team.id)}><Copy className="w-3 h-3" /></Button>
                         </div>
                       </TableCell>
                       <TableCell>
                         {team.passcode ? (
-                          <span className="badge-purple text-xs px-2 py-1 rounded">محمي</span>
+                          <span className="badge-purple text-xs px-2 py-1 rounded">{t('admin.protected')}</span>
                         ) : (
-                          <span className="text-muted-foreground text-sm">بدون رمز</span>
+                          <span className="text-muted-foreground text-sm">{t('admin.noPasscode')}</span>
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">{formatDate(team.createdAt)}</TableCell>
@@ -198,12 +170,8 @@ const Admin = () => {
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-accent hover:text-accent/80" asChild>
                             <Link to={`/team/${team.id}/view/tasks`}><Eye className="w-4 h-4" /></Link>
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(team)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive/80" onClick={() => openDeleteDialog(team)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(team)}><Edit className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive/80" onClick={() => openDeleteDialog(team)}><Trash2 className="w-4 h-4" /></Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -214,32 +182,30 @@ const Admin = () => {
           </CardContent>
         </Card>
 
-        {/* Edit Dialog */}
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent className="sm:max-w-md">
-            <DialogHeader><DialogTitle>تعديل الفريق</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{t('admin.editTeam')}</DialogTitle></DialogHeader>
             <form onSubmit={handleEdit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="editTeamName">اسم الفريق</Label>
-                <Input id="editTeamName" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="أدخل اسم الفريق" className="input-rtl" required />
+                <Label htmlFor="editTeamName">{t('admin.teamName')}</Label>
+                <Input id="editTeamName" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder={t('admin.teamNamePlaceholder')} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="editTeamPasscode">رمز الدخول (اختياري)</Label>
-                <Input id="editTeamPasscode" value={teamPasscode} onChange={(e) => setTeamPasscode(e.target.value)} placeholder="أدخل رمز دخول جديد أو اتركه فارغاً" className="input-rtl" />
+                <Label htmlFor="editTeamPasscode">{t('admin.teamPasscode')}</Label>
+                <Input id="editTeamPasscode" value={teamPasscode} onChange={(e) => setTeamPasscode(e.target.value)} placeholder={t('admin.editPasscodePlaceholder')} />
               </div>
-              <Button type="submit" className="w-full btn-teal">حفظ التغييرات</Button>
+              <Button type="submit" className="w-full btn-teal">{t('common.saveChanges')}</Button>
             </form>
           </DialogContent>
         </Dialog>
 
-        {/* Delete Dialog */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent className="sm:max-w-md">
-            <DialogHeader><DialogTitle>حذف الفريق</DialogTitle></DialogHeader>
-            <p className="text-muted-foreground">هل أنت متأكد من حذف فريق "{selectedTeam?.name}"؟ سيتم حذف جميع بيانات التقرير.</p>
+            <DialogHeader><DialogTitle>{t('admin.deleteTeam')}</DialogTitle></DialogHeader>
+            <p className="text-muted-foreground">{t('admin.deleteConfirm', { name: selectedTeam?.name })}</p>
             <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>إلغاء</Button>
-              <Button variant="destructive" onClick={handleDelete}>حذف</Button>
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>{t('common.cancel')}</Button>
+              <Button variant="destructive" onClick={handleDelete}>{t('common.delete')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

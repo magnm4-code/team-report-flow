@@ -1,4 +1,5 @@
 import { NavLink, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ClipboardList, Trophy, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -9,12 +10,13 @@ interface ReportSidebarProps {
 
 const ReportSidebar = ({ mode, teamName }: ReportSidebarProps) => {
   const { teamId } = useParams();
+  const { t } = useTranslation();
   const basePath = `/team/${teamId}/${mode}`;
 
   const navItems = [
-    { to: `${basePath}/tasks`, label: 'المهام', icon: ClipboardList },
-    { to: `${basePath}/achievements`, label: 'المهام المنجزة لهذا الاسبوع', icon: Trophy },
-    { to: `${basePath}/challenges`, label: 'التحديات و الصعوبات', icon: AlertTriangle },
+    { to: `${basePath}/tasks`, label: t('report.navTasks'), icon: ClipboardList },
+    { to: `${basePath}/achievements`, label: t('report.navAchievements'), icon: Trophy },
+    { to: `${basePath}/challenges`, label: t('report.navChallenges'), icon: AlertTriangle },
   ];
 
   return (
@@ -22,21 +24,16 @@ const ReportSidebar = ({ mode, teamName }: ReportSidebarProps) => {
       <div className="p-6 border-b border-sidebar-border">
         <h2 className="text-xl font-bold text-sidebar-foreground">{teamName}</h2>
         <p className="text-sm text-sidebar-foreground/70 mt-1">
-          {mode === 'fill' ? 'تحرير التقرير' : 'عرض التقرير'}
+          {mode === 'fill' ? t('report.editReport') : t('report.viewReport')}
         </p>
       </div>
-      
+
       <nav className="flex-1 p-4 space-y-2">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
-            className={({ isActive }) =>
-              cn(
-                'sidebar-nav-item',
-                isActive && 'sidebar-nav-item-active'
-              )
-            }
+            className={({ isActive }) => cn('sidebar-nav-item', isActive && 'sidebar-nav-item-active')}
           >
             <item.icon className="w-5 h-5" />
             <span>{item.label}</span>
@@ -45,11 +42,8 @@ const ReportSidebar = ({ mode, teamName }: ReportSidebarProps) => {
       </nav>
 
       <div className="p-4 border-t border-sidebar-border">
-        <NavLink
-          to="/"
-          className="sidebar-nav-item text-sidebar-foreground/60 hover:text-sidebar-foreground"
-        >
-          العودة للرئيسية
+        <NavLink to="/" className="sidebar-nav-item text-sidebar-foreground/60 hover:text-sidebar-foreground">
+          {t('report.backHome')}
         </NavLink>
       </div>
     </aside>

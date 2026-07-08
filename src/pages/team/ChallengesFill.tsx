@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import { toast } from '@/hooks/use-toast';
 const ChallengesFill = () => {
   const { teamId: teamIdParam } = useParams();
   const teamId = Number(teamIdParam);
+  const { t } = useTranslation();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -21,9 +23,7 @@ const ChallengesFill = () => {
   const [text, setText] = useState('');
   const [supportNeeded, setSupportNeeded] = useState('');
 
-  useEffect(() => {
-    if (teamId) { getChallenges(teamId).then(setChallenges); }
-  }, [teamId]);
+  useEffect(() => { if (teamId) { getChallenges(teamId).then(setChallenges); } }, [teamId]);
 
   const resetForm = () => { setText(''); setSupportNeeded(''); setEditingItem(null); };
   const openAddDialog = () => { resetForm(); setDialogOpen(true); };
@@ -36,14 +36,13 @@ const ChallengesFill = () => {
     let updated: any[];
     if (editingItem) {
       updated = challenges.map(c => c.id === editingItem.id ? { ...c, text: text.trim(), supportNeeded: supportNeeded.trim() || undefined, updatedAt: now } : c);
-      toast({ title: 'تم تحديث التحدي' });
+      toast({ title: t('challenges.updatedToast') });
     } else {
       updated = [...challenges, { teamId, text: text.trim(), supportNeeded: supportNeeded.trim() || undefined, createdAt: now, updatedAt: now }];
-      toast({ title: 'تمت إضافة التحدي' });
+      toast({ title: t('challenges.addedToast') });
     }
     await saveChallenges(teamId, updated);
-    const refreshed = await getChallenges(teamId);
-    setChallenges(refreshed);
+    setChallenges(await getChallenges(teamId));
     setDialogOpen(false);
     resetForm();
   };
@@ -55,18 +54,18 @@ const ChallengesFill = () => {
     await saveChallenges(teamId, updated);
     setDeleteDialogOpen(false);
     setSelectedItem(null);
-    toast({ title: 'تم حذف التحدي' });
+    toast({ title: t('challenges.deletedToast') });
   };
 
   return (
     <Card className="card-elevated animate-fade-in">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-destructive" />التحديات والصعوبات</CardTitle>
-        <Button className="btn-teal" onClick={openAddDialog}><Plus className="w-4 h-4 ml-2" />إضافة تحدي</Button>
+        <CardTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-destructive" />{t('challenges.title')}</CardTitle>
+        <Button className="btn-teal" onClick={openAddDialog}><Plus className="w-4 h-4 me-2" />{t('challenges.addChallenge')}</Button>
       </CardHeader>
       <CardContent>
         {challenges.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground"><AlertTriangle className="w-12 h-12 mx-auto mb-4 opacity-30" /><p>لا توجد تحديات مسجلة</p><p className="text-sm mt-2">أضف التحديات والصعوبات التي تواجه الفريق</p></div>
+          <div className="text-center py-12 text-muted-foreground"><AlertTriangle className="w-12 h-12 mx-auto mb-4 opacity-30" /><p>{t('challenges.noChallenges')}</p><p className="text-sm mt-2">{t('challenges.noChallengesHint')}</p></div>
         ) : (
           <div className="space-y-4">
             {challenges.map((item) => (
@@ -76,7 +75,7 @@ const ChallengesFill = () => {
                     <p className="whitespace-pre-wrap text-foreground font-medium">{item.text}</p>
                     {item.supportNeeded && (
                       <div className="mt-3 p-3 bg-highlight/10 border border-highlight/20 rounded">
-                        <p className="text-sm text-highlight font-medium mb-1">الدعم المطلوب:</p>
+                        <p className="text-sm text-highlight font-medium mb-1">{t('challenges.supportLabel')}</p>
                         <p className="text-sm text-foreground/80 whitespace-pre-wrap">{item.supportNeeded}</p>
                       </div>
                     )}
@@ -94,13 +93,13 @@ const ChallengesFill = () => {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>{editingItem ? 'تعديل التحدي' : 'إضافة تحدي جديد'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingItem ? t('challenges.edit') : t('challenges.addNew')}</DialogTitle></DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
-            <div className="space-y-2"><Label>وصف التحدي أو الصعوبة</Label><Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="أدخل وصف التحدي" className="input-rtl min-h-32" required /></div>
-            <div className="space-y-2"><Label>الدعم أو الإجراء المطلوب (اختياري)</Label><Textarea value={supportNeeded} onChange={(e) => setSupportNeeded(e.target.value)} placeholder="أدخل الدعم المطلوب لحل هذا التحدي" className="input-rtl min-h-24" /></div>
+            <div className="space-y-2"><Label>{t('challenges.descField')}</Label><Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={t('challenges.descPlaceholder')} className="min-h-32" required /></div>
+            <div className="space-y-2"><Label>{t('challenges.supportField')}</Label><Textarea value={supportNeeded} onChange={(e) => setSupportNeeded(e.target.value)} placeholder={t('challenges.supportPlaceholder')} className="min-h-24" /></div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>إلغاء</Button>
-              <Button type="submit" className="btn-teal">{editingItem ? 'حفظ التغييرات' : 'إضافة'}</Button>
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
+              <Button type="submit" className="btn-teal">{editingItem ? t('common.saveChanges') : t('common.add')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -108,11 +107,11 @@ const ChallengesFill = () => {
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>حذف التحدي</DialogTitle></DialogHeader>
-          <p className="text-muted-foreground">هل أنت متأكد من حذف هذا التحدي؟</p>
+          <DialogHeader><DialogTitle>{t('challenges.deleteTitle')}</DialogTitle></DialogHeader>
+          <p className="text-muted-foreground">{t('challenges.confirmDelete')}</p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>إلغاء</Button>
-            <Button variant="destructive" onClick={handleDelete}>حذف</Button>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>{t('common.cancel')}</Button>
+            <Button variant="destructive" onClick={handleDelete}>{t('common.delete')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

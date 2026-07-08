@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Moon, Sun, GripVertical } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Moon, Sun, GripVertical, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getSettings, applyThemeColors } from '@/lib/storage';
 import ncgrLogo from '@/assets/ncgr-logo.png';
@@ -20,7 +21,7 @@ interface HeaderProps {
   children?: React.ReactNode;
 }
 
-type HeaderItemId = 'logo' | 'title' | 'darkmode';
+type HeaderItemId = 'logo' | 'title' | 'controls';
 
 const SortableHeaderItem = ({ id, children }: { id: HeaderItemId; children: React.ReactNode }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
@@ -36,12 +37,13 @@ const SortableHeaderItem = ({ id, children }: { id: HeaderItemId; children: Reac
   );
 };
 
-const Header = ({ showHomeButton = false, title, subtitle, children }: HeaderProps) => {
+const Header = ({ title, subtitle, children }: HeaderProps) => {
+  const { t, i18n } = useTranslation();
   const [isDark, setIsDark] = useState(false);
   const [settings, setSettingsState] = useState<{ headerTitle: string; headerSubtitle: string; logoUrl?: string; themeColors?: any }>({
-    headerTitle: 'التقرير الأسبوعي', headerSubtitle: 'نظام إدارة التقارير الأسبوعية للفرق', logoUrl: '', themeColors: undefined,
+    headerTitle: '', headerSubtitle: '', logoUrl: '', themeColors: undefined,
   });
-  const [headerOrder, setHeaderOrder] = useLayoutOrder<HeaderItemId>('header-layout-order', ['logo', 'title', 'darkmode']);
+  const [headerOrder, setHeaderOrder] = useLayoutOrder<HeaderItemId>('header-layout-order-v2', ['logo', 'title', 'controls']);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -54,7 +56,7 @@ const Header = ({ showHomeButton = false, title, subtitle, children }: HeaderPro
     const isDarkMode = savedTheme === 'dark' || (!savedTheme && prefersDark);
     setIsDark(isDarkMode);
     document.documentElement.classList.toggle('dark', isDarkMode);
-    
+
     getSettings().then((s) => {
       setSettingsState(s);
       if (s.themeColors) applyThemeColors(s.themeColors);
@@ -68,8 +70,15 @@ const Header = ({ showHomeButton = false, title, subtitle, children }: HeaderPro
     document.documentElement.classList.toggle('dark', newMode);
   };
 
-  const displayTitle = title || settings.headerTitle;
-  const displaySubtitle = subtitle || settings.headerSubtitle;
+  const toggleLanguage = () => {
+    const next = i18n.language === 'ar' ? 'en' : 'ar';
+    i18n.changeLanguage(next);
+  };
+
+  // Show admin-customized title only when in Arabic (customization is Arabic content).
+  // For other titles/subtitles: use explicit prop, otherwise fall back to i18n default.
+  const displayTitle = title ?? (i18n.language === 'ar' && settings.headerTitle ? settings.headerTitle : t('home.defaultHeaderTitle'));
+  const displaySubtitle = subtitle ?? (i18n.language === 'ar' && settings.headerSubtitle ? settings.headerSubtitle : t('home.defaultHeaderSubtitle'));
   const logoSrc = settings.logoUrl || ncgrLogo;
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -86,9 +95,20 @@ const Header = ({ showHomeButton = false, title, subtitle, children }: HeaderPro
       case 'logo':
         return (<Link to="/" className="flex-shrink-0"><img src={logoSrc} alt="Logo" className="h-12 md:h-16 w-auto bg-white/90 rounded-lg p-1" /></Link>);
       case 'title':
-        return (<div className="text-center md:text-right"><h1 className="text-xl md:text-2xl font-bold">{displayTitle}</h1>{displaySubtitle && <p className="text-sm opacity-80">{displaySubtitle}</p>}</div>);
-      case 'darkmode':
-        return (<div className="flex items-center gap-2"><Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10" onClick={toggleDarkMode}>{isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}</Button>{children}</div>);
+        return (<div className="text-center"><h1 className="text-xl md:text-2xl font-bold">{displayTitle}</h1>{displaySubtitle && <p className="text-sm opacity-80">{displaySubtitle}</p>}</div>);
+      case 'controls':
+        return (
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/10 gap-1" onClick={toggleLanguage} aria-label="Toggle language">
+              <Languages className="w-4 h-4" />
+              <span className="text-xs font-semibold">{i18n.language === 'ar' ? 'EN' : 'ع'}</span>
+            </Button>
+            <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10" onClick={toggleDarkMode} aria-label="Toggle theme">
+              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </Button>
+            {children}
+          </div>
+        );
       default: return null;
     }
   };
