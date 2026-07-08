@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Navigate, Outlet } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { getTeam } from '@/lib/storage';
 import { Team } from '@/types';
 import ReportSidebar from './ReportSidebar';
@@ -11,28 +12,26 @@ interface ReportLayoutProps {
 
 const ReportLayout = ({ mode }: ReportLayoutProps) => {
   const { teamId } = useParams();
+  const { t, i18n } = useTranslation();
   const [team, setTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (teamId) {
-      getTeam(Number(teamId)).then((t) => {
-        setTeam(t || null);
-        setLoading(false);
-      });
-    } else {
-      setLoading(false);
-    }
+      getTeam(Number(teamId)).then((t) => { setTeam(t || null); setLoading(false); });
+    } else { setLoading(false); }
   }, [teamId]);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">جاري التحميل...</div></div>;
+    return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-pulse text-muted-foreground">{t('common.loading')}</div></div>;
   }
 
   if (!team) return <Navigate to="/" replace />;
 
   const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat('ar-SA', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(dateString));
+    return new Intl.DateTimeFormat(i18n.language === 'ar' ? 'ar-SA' : 'en-US', {
+      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    }).format(new Date(dateString));
   };
 
   return (
@@ -40,9 +39,9 @@ const ReportLayout = ({ mode }: ReportLayoutProps) => {
       <ReportSidebar mode={mode} teamName={team.name} />
       <main className="flex-1 flex flex-col">
         <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6">
-          <h1 className="text-xl font-semibold text-foreground">{mode === 'fill' ? 'تحرير التقرير الأسبوعي' : 'التقرير الأسبوعي'}</h1>
+          <h1 className="text-xl font-semibold text-foreground">{mode === 'fill' ? t('report.editWeeklyReport') : t('report.weeklyReport')}</h1>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="w-4 h-4" /><span>آخر تحديث: {formatDate(team.updatedAt)}</span>
+            <Clock className="w-4 h-4" /><span>{t('report.lastUpdate')} {formatDate(team.updatedAt)}</span>
           </div>
         </header>
         <div className="flex-1 p-6 overflow-auto"><Outlet /></div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,19 +16,15 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const AdminSettings = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, loading } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [settings, setSettingsState] = useState<Settings>({
-    headerTitle: 'التقرير الأسبوعي',
-    headerSubtitle: 'نظام إدارة التقارير الأسبوعية للفرق',
-    logoUrl: '',
-    themeColors: getDefaultThemeColors(),
-    featuresTitle: 'مميزات النظام',
+    headerTitle: '', headerSubtitle: '', logoUrl: '',
+    themeColors: getDefaultThemeColors(), featuresTitle: '',
   });
 
-  useEffect(() => {
-    if (!loading && !user) navigate('/auth');
-  }, [user, loading, navigate]);
+  useEffect(() => { if (!loading && !user) navigate('/auth'); }, [user, loading, navigate]);
 
   useEffect(() => {
     getSettings().then((s) => {
@@ -39,20 +36,18 @@ const AdminSettings = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     await saveSettings(settings);
-    toast({ title: 'تم الحفظ', description: 'تم حفظ إعدادات النظام بنجاح' });
+    toast({ title: t('settings.saved'), description: t('settings.savedDesc') });
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        toast({ title: 'خطأ', description: 'حجم الملف يجب أن يكون أقل من 2 ميجابايت', variant: 'destructive' });
+        toast({ title: t('common.error'), description: t('settings.fileTooBig'), variant: 'destructive' });
         return;
       }
       const reader = new FileReader();
-      reader.onload = (event) => {
-        setSettingsState({ ...settings, logoUrl: event.target?.result as string });
-      };
+      reader.onload = (event) => setSettingsState({ ...settings, logoUrl: event.target?.result as string });
       reader.readAsDataURL(file);
     }
   };
@@ -67,7 +62,7 @@ const AdminSettings = () => {
     const defaultColors = getDefaultThemeColors();
     setSettingsState({ ...settings, themeColors: defaultColors });
     applyThemeColors(defaultColors);
-    toast({ title: 'تم إعادة التعيين', description: 'تم استعادة الألوان الافتراضية' });
+    toast({ title: t('settings.colorsReset'), description: t('settings.colorsResetDesc') });
   };
 
   const removeLogo = () => {
@@ -75,15 +70,22 @@ const AdminSettings = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">جاري التحميل...</div>;
+  const colorLabels = {
+    primary: t('settings.colorLabelPrimary'),
+    secondary: t('settings.colorLabelSecondary'),
+    accent: t('settings.colorLabelAccent'),
+    success: t('settings.colorLabelSuccess'),
+    highlight: t('settings.colorLabelHighlight'),
+  };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center">{t('common.loading')}</div>;
   if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background">
-      <Header title="إعدادات النظام" subtitle="تخصيص مظهر التطبيق">
+      <Header title={t('settings.title')} subtitle={t('settings.subtitle')}>
         <Button variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10" onClick={() => navigate('/admin')}>
-          <ArrowRight className="w-4 h-4 ml-2" />
-          العودة للإدارة
+          <ArrowRight className="w-4 h-4 me-2" />{t('settings.backToAdmin')}
         </Button>
       </Header>
 
@@ -91,29 +93,29 @@ const AdminSettings = () => {
         <form onSubmit={handleSave}>
           <Tabs defaultValue="text" className="max-w-4xl mx-auto">
             <TabsList className="grid w-full grid-cols-3 mb-6">
-              <TabsTrigger value="text" className="flex items-center gap-2"><Type className="w-4 h-4" />النصوص</TabsTrigger>
-              <TabsTrigger value="logo" className="flex items-center gap-2"><Image className="w-4 h-4" />الشعار</TabsTrigger>
-              <TabsTrigger value="colors" className="flex items-center gap-2"><Palette className="w-4 h-4" />الألوان</TabsTrigger>
+              <TabsTrigger value="text" className="flex items-center gap-2"><Type className="w-4 h-4" />{t('settings.tabText')}</TabsTrigger>
+              <TabsTrigger value="logo" className="flex items-center gap-2"><Image className="w-4 h-4" />{t('settings.tabLogo')}</TabsTrigger>
+              <TabsTrigger value="colors" className="flex items-center gap-2"><Palette className="w-4 h-4" />{t('settings.tabColors')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="text">
               <Card className="card-elevated">
                 <CardHeader>
-                  <CardTitle>إعدادات النصوص</CardTitle>
-                  <CardDescription>تخصيص عناوين ونصوص النظام</CardDescription>
+                  <CardTitle>{t('settings.textCardTitle')}</CardTitle>
+                  <CardDescription>{t('settings.textCardDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="headerTitle">عنوان النظام الرئيسي</Label>
-                    <Input id="headerTitle" value={settings.headerTitle} onChange={(e) => setSettingsState({ ...settings, headerTitle: e.target.value })} placeholder="أدخل عنوان النظام" className="input-rtl" required />
+                    <Label htmlFor="headerTitle">{t('settings.mainTitle')}</Label>
+                    <Input id="headerTitle" value={settings.headerTitle} onChange={(e) => setSettingsState({ ...settings, headerTitle: e.target.value })} placeholder={t('settings.mainTitlePlaceholder')} required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="headerSubtitle">الوصف الفرعي</Label>
-                    <Input id="headerSubtitle" value={settings.headerSubtitle} onChange={(e) => setSettingsState({ ...settings, headerSubtitle: e.target.value })} placeholder="أدخل الوصف الفرعي" className="input-rtl" />
+                    <Label htmlFor="headerSubtitle">{t('settings.subTitle')}</Label>
+                    <Input id="headerSubtitle" value={settings.headerSubtitle} onChange={(e) => setSettingsState({ ...settings, headerSubtitle: e.target.value })} placeholder={t('settings.subTitlePlaceholder')} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="featuresTitle">عنوان قسم المميزات</Label>
-                    <Input id="featuresTitle" value={settings.featuresTitle || ''} onChange={(e) => setSettingsState({ ...settings, featuresTitle: e.target.value })} placeholder="أدخل عنوان قسم المميزات" className="input-rtl" />
+                    <Label htmlFor="featuresTitle">{t('settings.featuresSectionTitle')}</Label>
+                    <Input id="featuresTitle" value={settings.featuresTitle || ''} onChange={(e) => setSettingsState({ ...settings, featuresTitle: e.target.value })} placeholder={t('settings.featuresSectionPlaceholder')} />
                   </div>
                 </CardContent>
               </Card>
@@ -122,33 +124,31 @@ const AdminSettings = () => {
             <TabsContent value="logo">
               <Card className="card-elevated">
                 <CardHeader>
-                  <CardTitle>إعدادات الشعار</CardTitle>
-                  <CardDescription>تخصيص شعار النظام</CardDescription>
+                  <CardTitle>{t('settings.logoCardTitle')}</CardTitle>
+                  <CardDescription>{t('settings.logoCardDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
-                    <Label>شعار النظام</Label>
+                    <Label>{t('settings.logoLabel')}</Label>
                     <div className="flex items-center gap-6">
                       <div className="w-24 h-24 rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-muted/50 overflow-hidden">
                         {settings.logoUrl ? (
                           <img src={settings.logoUrl} alt="Logo Preview" className="w-full h-full object-contain p-2" />
-                        ) : (
-                          <Image className="w-8 h-8 text-muted-foreground" />
-                        )}
+                        ) : (<Image className="w-8 h-8 text-muted-foreground" />)}
                       </div>
                       <div className="flex flex-col gap-2">
                         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" id="logoUpload" />
                         <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                          <Upload className="w-4 h-4 ml-2" />رفع شعار جديد
+                          <Upload className="w-4 h-4 me-2" />{t('settings.uploadLogo')}
                         </Button>
                         {settings.logoUrl && (
-                          <Button type="button" variant="ghost" className="text-destructive hover:text-destructive" onClick={removeLogo}>إزالة الشعار</Button>
+                          <Button type="button" variant="ghost" className="text-destructive hover:text-destructive" onClick={removeLogo}>{t('settings.removeLogo')}</Button>
                         )}
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">يُفضل استخدام صورة بخلفية شفافة (PNG) بحجم أقصى 2 ميجابايت</p>
+                    <p className="text-sm text-muted-foreground">{t('settings.logoHint')}</p>
                     <div className="space-y-2">
-                      <Label htmlFor="logoUrl">أو أدخل رابط الشعار</Label>
+                      <Label htmlFor="logoUrl">{t('settings.logoUrlLabel')}</Label>
                       <Input id="logoUrl" value={settings.logoUrl || ''} onChange={(e) => setSettingsState({ ...settings, logoUrl: e.target.value })} placeholder="https://example.com/logo.png" dir="ltr" className="font-mono text-sm" />
                     </div>
                   </div>
@@ -160,27 +160,27 @@ const AdminSettings = () => {
               <Card className="card-elevated">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
-                    <CardTitle>إعدادات الألوان</CardTitle>
-                    <CardDescription>تخصيص ألوان النظام</CardDescription>
+                    <CardTitle>{t('settings.colorsCardTitle')}</CardTitle>
+                    <CardDescription>{t('settings.colorsCardDesc')}</CardDescription>
                   </div>
                   <Button type="button" variant="outline" size="sm" onClick={resetColors}>
-                    <RotateCcw className="w-4 h-4 ml-2" />استعادة الافتراضي
+                    <RotateCcw className="w-4 h-4 me-2" />{t('settings.resetDefaults')}
                   </Button>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
-                    <ColorPicker label="اللون الأساسي (Primary)" value={settings.themeColors?.primary || getDefaultThemeColors().primary} onChange={(value) => handleColorChange('primary', value)} />
-                    <ColorPicker label="اللون الثانوي (Secondary)" value={settings.themeColors?.secondary || getDefaultThemeColors().secondary} onChange={(value) => handleColorChange('secondary', value)} />
-                    <ColorPicker label="لون التمييز (Accent)" value={settings.themeColors?.accent || getDefaultThemeColors().accent} onChange={(value) => handleColorChange('accent', value)} />
-                    <ColorPicker label="لون النجاح (Success)" value={settings.themeColors?.success || getDefaultThemeColors().success} onChange={(value) => handleColorChange('success', value)} />
-                    <ColorPicker label="لون التمييز الخاص (Highlight)" value={settings.themeColors?.highlight || getDefaultThemeColors().highlight} onChange={(value) => handleColorChange('highlight', value)} />
+                    <ColorPicker label={t('settings.primaryColor')} value={settings.themeColors?.primary || getDefaultThemeColors().primary} onChange={(value) => handleColorChange('primary', value)} />
+                    <ColorPicker label={t('settings.secondaryColor')} value={settings.themeColors?.secondary || getDefaultThemeColors().secondary} onChange={(value) => handleColorChange('secondary', value)} />
+                    <ColorPicker label={t('settings.accentColor')} value={settings.themeColors?.accent || getDefaultThemeColors().accent} onChange={(value) => handleColorChange('accent', value)} />
+                    <ColorPicker label={t('settings.successColor')} value={settings.themeColors?.success || getDefaultThemeColors().success} onChange={(value) => handleColorChange('success', value)} />
+                    <ColorPicker label={t('settings.highlightColor')} value={settings.themeColors?.highlight || getDefaultThemeColors().highlight} onChange={(value) => handleColorChange('highlight', value)} />
                   </div>
                   <div className="mt-6 p-4 rounded-lg border border-border bg-muted/30">
-                    <Label className="mb-3 block">معاينة الألوان</Label>
+                    <Label className="mb-3 block">{t('settings.colorPreview')}</Label>
                     <div className="flex flex-wrap gap-3">
                       {(['primary', 'secondary', 'accent', 'success', 'highlight'] as const).map(key => (
                         <div key={key} className="w-16 h-16 rounded-lg shadow-sm flex items-center justify-center text-xs font-medium text-white" style={{ backgroundColor: `hsl(${settings.themeColors?.[key]})` }}>
-                          {key === 'primary' ? 'أساسي' : key === 'secondary' ? 'ثانوي' : key === 'accent' ? 'تمييز' : key === 'success' ? 'نجاح' : 'خاص'}
+                          {colorLabels[key]}
                         </div>
                       ))}
                     </div>
@@ -191,7 +191,7 @@ const AdminSettings = () => {
 
             <div className="mt-6">
               <Button type="submit" className="w-full btn-teal" size="lg">
-                <Save className="w-5 h-5 ml-2" />حفظ جميع الإعدادات
+                <Save className="w-5 h-5 me-2" />{t('settings.saveAll')}
               </Button>
             </div>
           </Tabs>
