@@ -1,0 +1,1 @@
+UPDATE public.app_settings SET header_title = 'التقرير الأسبوعي', header_subtitle = 'نظام إدارة التقارير الأسبوعية للفرق', logo_url = '', features_title = 'مميزات النظام', theme_colors = '{"accent": "199 71% 65%", "primary": "204 66% 21%", "success": "74 54% 51%", "highlight": "250 32% 51%", "secondary": "180 72% 39%"}'::jsonb, updated_at = now();
